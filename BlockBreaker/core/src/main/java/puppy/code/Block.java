@@ -1,29 +1,36 @@
 package puppy.code;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
-import java.util.Random;
+public abstract class Block {
+    protected int x, y;
+    protected int width, height;
+    protected Color color;
+    protected boolean destroyed;
 
-import com.badlogic.gdx.graphics.Color;
-
-public class Block {
-    int x,y,width,height;
-    Color cc;
-    boolean destroyed;
-    
-    public Block(int x, int y, int width, int height) {
+    public Block(int x, int y, int width, int height, Color color) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
-        destroyed = false;
-        Random r = new Random(x+y);
-        
-       cc = new Color(0.1f+r.nextFloat(1), r.nextFloat(1), r.nextFloat(1), 10);
-  
+        this.color = color;
+        this.destroyed = false;
     }
-    public void draw(ShapeRenderer shape){
-    	shape.setColor(cc);
-        shape.rect(x, y, width, height);
+
+    public abstract void draw(ShapeRenderer shapeRenderer);
+
+    public boolean isDestroyed() {
+        return destroyed;
     }
+
+    public void destroy() {
+        destroyed = true;
+    }
+
+    // Getters
+    public int getX() { return x; }
+    public int getY() { return y; }
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
 }
