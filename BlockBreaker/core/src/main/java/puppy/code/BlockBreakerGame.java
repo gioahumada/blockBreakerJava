@@ -47,7 +47,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
 		    shape = new ShapeRenderer();
 		    ball = new PingBall(Gdx.graphics.getWidth()/2-10, 41, 10, 5, 7, true);
 		    pad = new Paddle(Gdx.graphics.getWidth()/2-50,40,100,10);
-		    vidas = 3;
+		    vidas = 1;
 		    puntaje = 0;
             gameOver = false; // Inicialmente no es Game Over
             fadeOpacity = 0f; // Opacidad inicial para el efecto fade-in

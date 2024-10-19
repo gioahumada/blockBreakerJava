@@ -1,11 +1,9 @@
 package puppy.code;
 
-
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
-public class HardBlock extends Block
-{
+public class HardBlock extends Block {
     private int hitsRemaining;
 
     public HardBlock(int x, int y, int width, int height) {
@@ -32,4 +30,3 @@ public class HardBlock extends Block
         return hitsRemaining;
     }
 }
-
