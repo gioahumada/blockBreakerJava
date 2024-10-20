@@ -16,42 +16,45 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class BlockBreakerGame extends ApplicationAdapter {
     private OrthographicCamera camera;
-	private SpriteBatch batch;
-	private BitmapFont font;
-	private ShapeRenderer shape;
-	private PingBall ball;
-	private Paddle pad;
-	private ArrayList<Block> blocks = new ArrayList<>();
-	private int vidas;
-	private int puntaje;
-	private int nivel;
+    private SpriteBatch batch;
+    private BitmapFont font;
+    private ShapeRenderer shape;
+    private PingBall ball;
+    private Paddle pad;
+    private ArrayList<Block> blocks = new ArrayList<>();
+    private int vidas;
+    private int puntaje;
+    private int nivel;
     private boolean gameOver; // Variable para controlar si es Game Over
     private float fadeOpacity; // Opacidad para el efecto de fade-in
     private int puntajeMaximo; // Almacena el puntaje máximo
     private boolean nivelCompletado = false;
     private float tiempoTransicion = 2.0f;  // Duración de la pantalla de transición en segundos
 
-
+    // Variables para el menú principal
+    private boolean menuPrincipal = true;  // Estado del menú principal
+    private int opcionSeleccionada = 0;  // Opción seleccionada en el menú
+    private boolean mostrarControlesActivo = false;
 
 
     @Override
-		public void create () {
-			camera = new OrthographicCamera();
-		    camera.setToOrtho(false, 800, 480);
-		    batch = new SpriteBatch();
-		    font = new BitmapFont();
-		    font.getData().setScale(3, 2);
-		    nivel = 1;
-		    crearBloques(2+nivel);
+    public void create () {
+        camera = new OrthographicCamera();
+        camera.setToOrtho(false, 800, 480);
+        batch = new SpriteBatch();
+        font = new BitmapFont();
+        font.getData().setScale(3, 2);
+        nivel = 1;
+        crearBloques(2+nivel);
 
-		    shape = new ShapeRenderer();
-		    ball = new PingBall(Gdx.graphics.getWidth()/2-10, 41, 10, 5, 7, true);
-		    pad = new Paddle(Gdx.graphics.getWidth()/2-50,40,100,10);
-		    vidas = 1;
-		    puntaje = 0;
-            gameOver = false; // Inicialmente no es Game Over
-            fadeOpacity = 0f; // Opacidad inicial para el efecto fade-in
-            puntajeMaximo = 0; // Inicializamos el puntaje máximo en 0
+        shape = new ShapeRenderer();
+        ball = new PingBall(Gdx.graphics.getWidth()/2-10, 41, 10, 5, 7, true);
+        pad = new Paddle(Gdx.graphics.getWidth()/2-50,40,100,10);
+        vidas = 3;
+        puntaje = 0;
+        gameOver = false; // Inicialmente no es Game Over
+        fadeOpacity = 0f; // Opacidad inicial para el efecto fade-in
+        puntajeMaximo = 0; // Inicializamos el puntaje máximo en 0
 
     }
     public void crearBloques(int filas)
@@ -72,21 +75,29 @@ public class BlockBreakerGame extends ApplicationAdapter {
             }
         }
     }
-		public void dibujaTextos() {
-			//actualizar matrices de la cámara
-			camera.update();
-			//actualizar
-			batch.setProjectionMatrix(camera.combined);
-			batch.begin();
-			//dibujar textos
-			font.draw(batch, "Puntos: " + puntaje, 10, 25);
-			font.draw(batch, "Vidas : " + vidas, Gdx.graphics.getWidth()-20, 25);
-			batch.end();
-		}
+    public void dibujaTextos() {
+        //actualizar matrices de la cámara
+        camera.update();
+        //actualizar
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        //dibujar textos
+        font.draw(batch, "Puntos: " + puntaje, 10, 25);
+        font.draw(batch, "Vidas : " + vidas, Gdx.graphics.getWidth()-20, 25);
+        batch.end();
+    }
 
-		@Override
-		public void render ()
-        {
+    @Override
+    public void render () {
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); // Limpiar la pantalla
+
+        // Si estamos en el menú principal, mostramos el menú
+        if (mostrarControlesActivo) {
+            mostrarControles();  // Mostrar controles si está activo
+        } else if (menuPrincipal) {
+            mostrarMenuPrincipal();  // Mostrar menú principal si no está jugando
+        } else {
+
             Gdx.gl.glClearColor(0, 0, 0, 1); // Limpiar la pantalla con un fondo negro
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -141,6 +152,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
                 ball.update();
             }
 
+
             // Verificar si la bola cae
             if (ball.getY() < 0) {
                 vidas--;  // Restamos una vida cuando la pelota cae
@@ -182,12 +194,75 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
             shape.end();
             dibujaTextos();
-		}
+        }
+    }
 
-		@Override
-		public void dispose () {
+    @Override
+    public void dispose () {
 
-		}
+    }
+
+
+    private void mostrarMenuPrincipal() {
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);  // Limpiar pantalla
+        camera.update();
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+
+        // Título del menú principal
+        font.setColor(Color.YELLOW);
+        font.getData().setScale(3);
+        font.draw(batch, "Block Breaker Game", Gdx.graphics.getWidth() / 2 - 200, Gdx.graphics.getHeight() / 2 + 150);
+
+        // Opciones del menú
+        font.setColor(Color.WHITE);
+        font.getData().setScale(2);
+        font.draw(batch, "1. Iniciar Juego", Gdx.graphics.getWidth() / 2 - 100, Gdx.graphics.getHeight() / 2 + 50);
+        font.draw(batch, "2. Controles", Gdx.graphics.getWidth() / 2 - 100, Gdx.graphics.getHeight() / 2);
+        font.draw(batch, "3. Salir", Gdx.graphics.getWidth() / 2 - 100, Gdx.graphics.getHeight() / 2 - 50);
+
+        // Detectar entrada del usuario para navegar en el menú
+        if (Gdx.input.isKeyPressed(Input.Keys.NUM_1)) {
+            menuPrincipal = false;  // Iniciar el juego
+        } else if (Gdx.input.isKeyPressed(Input.Keys.NUM_2)) {
+            mostrarControlesActivo = true;  // Activar la pantalla de controles
+        } else if (Gdx.input.isKeyPressed(Input.Keys.NUM_3)) {
+            Gdx.app.exit();  // Salir del juego
+        }
+
+        batch.end();
+    }
+
+    // Método para mostrar los controles e instrucciones del juego
+    private void mostrarControles() {
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);  // Limpiar pantalla
+        camera.update();
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+
+        // Título de controles
+        font.setColor(Color.CYAN);
+        font.getData().setScale(2.5f);
+        font.draw(batch, "Controles del Juego", Gdx.graphics.getWidth() / 2 - 150, Gdx.graphics.getHeight() / 2 + 150);
+
+        // Controles e instrucciones
+        font.setColor(Color.WHITE);
+        font.getData().setScale(1.5f);
+        font.draw(batch, "Movimiento: Izquierda/Derecha con las teclas del teclado", Gdx.graphics.getWidth() / 2 - 250, Gdx.graphics.getHeight() / 2 + 50);
+        font.draw(batch, "Lanzar la pelota: Presionar ESPACIO", Gdx.graphics.getWidth() / 2 - 250, Gdx.graphics.getHeight() / 2);
+        font.draw(batch, "Reiniciar Game Over: Presionar ESPACIO", Gdx.graphics.getWidth() / 2 - 250, Gdx.graphics.getHeight() / 2 - 50);
+        font.draw(batch, "Objetivo: Destruir todos los bloques y evitar perder todas las vidas", Gdx.graphics.getWidth() / 2 - 300, Gdx.graphics.getHeight() / 2 - 100);
+
+        font.setColor(Color.YELLOW);
+        font.draw(batch, "Presiona 0 para volver al menú principal", Gdx.graphics.getWidth() / 2 - 200, Gdx.graphics.getHeight() / 2 - 200);
+
+        // Regresar al menú principal con ESCAPE
+        if (Gdx.input.isKeyPressed(Input.Keys.NUM_0)) {
+            mostrarControlesActivo = false;  // Volver al menú principal
+        }
+
+        batch.end();
+    }
 
     private void mostrarGameOver() {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT); // Limpiar pantalla
@@ -231,6 +306,4 @@ public class BlockBreakerGame extends ApplicationAdapter {
         font.draw(batch, "¡Nivel Completado!", Gdx.graphics.getWidth() / 2 - 100, Gdx.graphics.getHeight() / 2);
         batch.end();
     }
-
-
 }
