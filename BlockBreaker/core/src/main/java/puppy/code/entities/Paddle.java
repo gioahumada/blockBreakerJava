@@ -1,4 +1,4 @@
-package puppy.code;
+package puppy.code.entities;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -13,7 +13,7 @@ public class Paddle {
 
     public Paddle(int x, int y, int ancho, int alto) {
         this.x = x;
-        this.y= y;
+        this.y = y;
         width = ancho;
         height = alto;
     }
@@ -24,16 +24,13 @@ public class Paddle {
     public int getHeight() {return height;}
 
     public void draw(ShapeRenderer shape){
-        shape.setColor(Color.BLUE);
-        int x2 = x; //= Gdx.input.getX();
+        shape.setColor(Color.valueOf("0f380f"));
+        int x2 = x;
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) x2 =x-15;
         if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) x2=x+15;
-        // y = Gdx.graphics.getHeight() - Gdx.input.getY();
         if (x2 > 0 && x2+width < Gdx.graphics.getWidth()) {
             x = x2;
         }
         shape.rect(x, y, width, height);
     }
-
-
 }

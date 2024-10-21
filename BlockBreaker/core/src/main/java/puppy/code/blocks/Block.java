@@ -1,4 +1,4 @@
-package puppy.code;
+package puppy.code.blocks;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;

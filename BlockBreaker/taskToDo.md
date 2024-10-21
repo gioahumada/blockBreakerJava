@@ -17,11 +17,11 @@ código en Java
 clase abstracta debe ser utilizada por alguna otra clase (contexto)~~
 
 
-- **GM1.5** Diseño y codificación de 1 (una) interfaz que sea implementada por al menos 2 (dos) clases. La
-interfaz debe ser utilizada por alguna otra clase (contexto)
+- ~~**GM1.5** Diseño y codificación de 1 (una) interfaz que sea implementada por al menos 2 (dos) clases. La
+interfaz debe ser utilizada por alguna otra clase (contexto)~~
 
 
 - **GM1.6** Se debe aplicar encapsulamiento y principios OO
 
 
-- **GM1.7** Utilización de GitHub (Realización de al menos 3 Commit)
+- ~~**GM1.7** Utilización de GitHub (Realización de al menos 3 Commit)~~
