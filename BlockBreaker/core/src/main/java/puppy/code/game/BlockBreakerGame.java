@@ -9,6 +9,7 @@ import puppy.code.entities.PingBall;
 import puppy.code.interfaces.Damageable;
 import puppy.code.screens.MainMenuScreen;
 import puppy.code.screens.GameOverScreen;
+import puppy.code.screens.NextLevelScreen;
 import puppy.code.screens.TutorialScreen;
 
 import com.badlogic.gdx.ApplicationAdapter;
@@ -41,6 +42,8 @@ public class BlockBreakerGame extends ApplicationAdapter {
     private Texture backgroundTexture;
     private Color backgroundColor;
 
+    private NextLevelScreen nextLevelScreen;
+
     private MainMenuScreen mainMenuScreen;
     private GameOverScreen gameOverScreen;
     private TutorialScreen tutorialScreen;  // Pantalla de tutorial
@@ -67,8 +70,8 @@ public class BlockBreakerGame extends ApplicationAdapter {
         mainMenuScreen = new MainMenuScreen(this);
         gameOverScreen = new GameOverScreen(this);
         tutorialScreen = new TutorialScreen(this);  // Inicializar la pantalla de tutorial
-
-        breakSound = Gdx.audio.newMusic(Gdx.files.internal("assets/break_sound.mp3"));
+        nextLevelScreen = new NextLevelScreen(this);
+        breakSound = Gdx.audio.newMusic(Gdx.files.internal("break_sound.mp3"));
 
         iniciarJuego();
     }
@@ -109,12 +112,14 @@ public class BlockBreakerGame extends ApplicationAdapter {
     @Override
     public void render() {
         if (menuPrincipal) {
-            mainMenuScreen.render();  // Mostrar el menú principal
+            mainMenuScreen.render();  // Show the main menu
         } else if (gameOver) {
-            gameOverScreen.render(puntajeMaximo);  // Mostrar la pantalla de Game Over
+            gameOverScreen.render(puntajeMaximo);  // Show the Game Over screen
         } else if (tutorialActivo) {
-            tutorialScreen.render();  // Mostrar la pantalla de tutorial si está activa
-        } else {
+            tutorialScreen.render();  // Show the tutorial screen if active
+        } else if (nivelCompletado) {
+            nextLevelScreen.render(nivel);  // Show the Next Level screen
+        } else{
             Gdx.gl.glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -164,11 +169,11 @@ public class BlockBreakerGame extends ApplicationAdapter {
             }
 
             // Verificar si todos los bloques han sido destruidos
-            if (blocks.isEmpty()) {
+            if (blocks.isEmpty())
+            {
                 nivelCompletado = true;  // Marcar el nivel como completado
-                nivel++;  // Incrementar el nivel
-                crearBloques(2 + nivel);  // Crear nuevos bloques para el siguiente nivel
-                ball.setEstaQuieto(true);  // Colocar la pelota en estado quieto para comenzar el nuevo nivel
+
+
             }
 
             ball.checkCollision(pad);
@@ -200,7 +205,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
     public void reiniciarJuego() {
         gameOver = false;
-        startGame();
+        iniciarNuevoJuego();
     }
 
     public void volverAlMenu() {
@@ -208,10 +213,32 @@ public class BlockBreakerGame extends ApplicationAdapter {
         iniciarJuego();
     }
 
+    public void iniciarNuevoJuego()
+    {
+        nivel = 1;
+        vidas = 3;
+        puntaje = 0;  // Reiniciar solo el puntaje actual
+        nivelCompletado = false;
+        gameOver = false;
+
+        // Reiniciar la bola y la paleta
+        ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, 41, 10, 5, 7, true);
+        pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
+
+        crearBloques(2 + nivel);  // Crear nuevos bloques
+    }
+
     // Método para activar la pantalla de tutorial
     public void setScreen(TutorialScreen tutorialScreen) {
         tutorialActivo = true;  // Activa el tutorial
         menuPrincipal = false;  // Desactiva el menú principal
+    }
+    public void cargarSiguienteNivel() {
+        nivel++;  // Increment the level
+        ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, 41, 10, 5, 7, true);  // Reset ball position
+        pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);  // Reset paddle position
+        crearBloques(2 + nivel);  // Create new blocks for the next level
+        nivelCompletado = false;  // Reset the level completed flag
     }
 
     @Override
@@ -225,4 +252,5 @@ public class BlockBreakerGame extends ApplicationAdapter {
         shape.dispose();
         breakSound.dispose();
     }
+
 }
