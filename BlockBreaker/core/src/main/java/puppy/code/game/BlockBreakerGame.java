@@ -1,5 +1,6 @@
 package puppy.code.game;
 
+import com.badlogic.gdx.audio.Music;
 import puppy.code.blocks.Block;
 import puppy.code.blocks.HardBlock;
 import puppy.code.blocks.NormalBlock;
@@ -8,6 +9,7 @@ import puppy.code.entities.PingBall;
 import puppy.code.interfaces.Damageable;
 import puppy.code.screens.MainMenuScreen;
 import puppy.code.screens.GameOverScreen;
+import puppy.code.screens.TutorialScreen;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -41,8 +43,13 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
     private MainMenuScreen mainMenuScreen;
     private GameOverScreen gameOverScreen;
+    private TutorialScreen tutorialScreen;  // Pantalla de tutorial
     private boolean menuPrincipal = true;
     private boolean gameOver = false;
+    private boolean tutorialActivo = false; // Estado para indicar si el tutorial está activo
+
+    /* Musica */
+    public static Music breakSound;
 
     @Override
     public void create() {
@@ -59,6 +66,9 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
         mainMenuScreen = new MainMenuScreen(this);
         gameOverScreen = new GameOverScreen(this);
+        tutorialScreen = new TutorialScreen(this);  // Inicializar la pantalla de tutorial
+
+        breakSound = Gdx.audio.newMusic(Gdx.files.internal("assets/break_sound.mp3"));
 
         iniciarJuego();
     }
@@ -76,6 +86,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
         crearBloques(2 + nivel);
 
         menuPrincipal = true;
+        tutorialActivo = false;  // Asegurarse de que el tutorial no esté activo
     }
 
     public void crearBloques(int filas) {
@@ -98,9 +109,11 @@ public class BlockBreakerGame extends ApplicationAdapter {
     @Override
     public void render() {
         if (menuPrincipal) {
-            mainMenuScreen.render();
+            mainMenuScreen.render();  // Mostrar el menú principal
         } else if (gameOver) {
-            gameOverScreen.render(puntajeMaximo);
+            gameOverScreen.render(puntajeMaximo);  // Mostrar la pantalla de Game Over
+        } else if (tutorialActivo) {
+            tutorialScreen.render();  // Mostrar la pantalla de tutorial si está activa
         } else {
             Gdx.gl.glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -150,6 +163,14 @@ public class BlockBreakerGame extends ApplicationAdapter {
                 }
             }
 
+            // Verificar si todos los bloques han sido destruidos
+            if (blocks.isEmpty()) {
+                nivelCompletado = true;  // Marcar el nivel como completado
+                nivel++;  // Incrementar el nivel
+                crearBloques(2 + nivel);  // Crear nuevos bloques para el siguiente nivel
+                ball.setEstaQuieto(true);  // Colocar la pelota en estado quieto para comenzar el nuevo nivel
+            }
+
             ball.checkCollision(pad);
             ball.draw(shape);
             shape.end();
@@ -187,13 +208,21 @@ public class BlockBreakerGame extends ApplicationAdapter {
         iniciarJuego();
     }
 
+    // Método para activar la pantalla de tutorial
+    public void setScreen(TutorialScreen tutorialScreen) {
+        tutorialActivo = true;  // Activa el tutorial
+        menuPrincipal = false;  // Desactiva el menú principal
+    }
+
     @Override
     public void dispose() {
         mainMenuScreen.dispose();
         gameOverScreen.dispose();
+        tutorialScreen.dispose();  // Liberar recursos del tutorial
         batch.dispose();
         font.dispose();
         backgroundTexture.dispose();
         shape.dispose();
+        breakSound.dispose();
     }
 }

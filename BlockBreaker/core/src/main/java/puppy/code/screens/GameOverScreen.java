@@ -2,6 +2,7 @@ package puppy.code.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -13,6 +14,9 @@ public class GameOverScreen {
     private SpriteBatch batch;
     private BitmapFont font;
 
+    // Añadir la textura de la imagen de Game Over
+    private Texture gameOverImage;
+
     public GameOverScreen(BlockBreakerGame game) {
         this.game = game;
         camera = new OrthographicCamera();
@@ -20,6 +24,9 @@ public class GameOverScreen {
         batch = new SpriteBatch();
         font = new BitmapFont();
         font.getData().setScale(2);
+
+        // Cargar la imagen de Game Over
+        gameOverImage = new Texture(Gdx.files.internal("assets/gameover.png"));
     }
 
     public void render(int puntajeMaximo) {
@@ -28,11 +35,11 @@ public class GameOverScreen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        // Mostrar Game Over y puntaje máximo
-        font.draw(batch, "GAME OVER", Gdx.graphics.getWidth() / 2 - 80, Gdx.graphics.getHeight() / 2 + 100);
-        font.draw(batch, "Puntaje Maximo: " + puntajeMaximo, Gdx.graphics.getWidth() / 2 - 100, Gdx.graphics.getHeight() / 2);
-        font.draw(batch, "Presiona ESPACIO para reiniciar", Gdx.graphics.getWidth() / 2 - 180, Gdx.graphics.getHeight() / 2 - 50);
-        font.draw(batch, "Presiona ESC para volver al menú", Gdx.graphics.getWidth() / 2 - 180, Gdx.graphics.getHeight() / 2 - 100);
+        // Dibujar la imagen de Game Over
+        batch.draw(gameOverImage, 0, 0, 800, 480);  // Ajusta el tamaño y posición según necesites
+
+        // Mostrar el puntaje máximo
+        font.draw(batch, "Puntaje Maximo: " + puntajeMaximo, Gdx.graphics.getWidth() / 2 - 100, Gdx.graphics.getHeight() / 2 - 50);
 
         batch.end();
 
@@ -50,5 +57,6 @@ public class GameOverScreen {
     public void dispose() {
         batch.dispose();
         font.dispose();
+        gameOverImage.dispose();  // Liberar la textura de la imagen de Game Over
     }
 }

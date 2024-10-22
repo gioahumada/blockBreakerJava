@@ -2,6 +2,7 @@ package puppy.code.blocks;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import puppy.code.game.BlockBreakerGame;
 
 public abstract class Block {
     protected int x, y;
@@ -25,7 +26,10 @@ public abstract class Block {
     }
 
     public void destroy() {
-        destroyed = true;
+        if (!destroyed) {
+            destroyed = true;
+            BlockBreakerGame.breakSound.play();
+        }
     }
 
     // Getters

@@ -11,16 +11,20 @@ public class MainMenuScreen {
     private BlockBreakerGame game;
     private OrthographicCamera camera;
     private SpriteBatch batch;
-    private Texture menuBackground;  // Cargar la imagen de fondo del menú
+    private Texture menuBackground;
+
+    // Nueva pantalla para el tutorial
+    private TutorialScreen tutorialScreen;
 
     public MainMenuScreen(BlockBreakerGame game) {
         this.game = game;
         camera = new OrthographicCamera();
-        camera.setToOrtho(false, 800, 600);  // Ajustar la cámara a 800x600
+        camera.setToOrtho(false, 800, 600);
         batch = new SpriteBatch();
-
-        // Cargar la imagen desde Assets
         menuBackground = new Texture("mainscreen.png");
+
+        // Crear la pantalla del tutorial
+        tutorialScreen = new TutorialScreen(game);
     }
 
     public void render() {
@@ -29,23 +33,21 @@ public class MainMenuScreen {
         batch.setProjectionMatrix(camera.combined);
 
         batch.begin();
-
-        // Dibujar la imagen del menú de fondo
-        batch.draw(menuBackground, 0, 0, 800, 600);  // Asegúrate de que la imagen se ajuste a 800x600
-
+        batch.draw(menuBackground, 0, 0, 800, 600);
         batch.end();
 
-        // Funcionalidad para iniciar el juego y mostrar el tutorial
+        // Verificar si el usuario presiona el botón para empezar el juego o el tutorial
         if (Gdx.input.isKeyPressed(Input.Keys.NUM_1)) {
             game.startGame();  // Iniciar el juego
         } else if (Gdx.input.isKeyPressed(Input.Keys.NUM_2)) {
-            // Mostrar el tutorial, lógica futura
-            System.out.println("Tutorial (a implementar)");
+            game.setScreen(tutorialScreen);  // Cambiar a la pantalla del tutorial
+        } else if (Gdx.input.isKeyPressed(Input.Keys.NUM_3)) {
+            Gdx.app.exit();  // Salir del juego
         }
     }
 
     public void dispose() {
         batch.dispose();
-        menuBackground.dispose();  // Liberar la textura de la imagen
+        menuBackground.dispose();
     }
 }
