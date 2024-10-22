@@ -15,6 +15,7 @@ public class PingBall {
     private int ySpeed;
     private Color color = Color.valueOf("0f380f");
     private boolean estaQuieto;
+    private int velocidadMinima = 2; // Velocidad mínima para evitar que la bola se detenga
 
     public PingBall(int x, int y, int size, int xSpeed, int ySpeed, boolean iniciaQuieto) {
         this.x = x;
@@ -65,6 +66,22 @@ public class PingBall {
         this.ySpeed = newYSpeed;
     }
 
+    // Método para reducir la velocidad de la bola
+    public void reducirVelocidad() {
+        // Reducimos la velocidad a la mitad pero aseguramos que no baje de la velocidad mínima
+        xSpeed = (int)(xSpeed * 0.5);
+        ySpeed = (int)(ySpeed * 0.5);
+
+        if (Math.abs(xSpeed) < velocidadMinima) {
+            xSpeed = velocidadMinima * (xSpeed < 0 ? -1 : 1); // Mantener la dirección
+        }
+        if (Math.abs(ySpeed) < velocidadMinima) {
+            ySpeed = velocidadMinima * (ySpeed < 0 ? -1 : 1); // Mantener la dirección
+        }
+
+        System.out.println("Velocidad reducida: xSpeed=" + xSpeed + ", ySpeed=" + ySpeed);
+    }
+
     // Método para dibujar la bola en pantalla
     public void draw(ShapeRenderer shapeRenderer) {
         shapeRenderer.setColor(color);
@@ -111,18 +128,18 @@ public class PingBall {
     // Método privado que verifica si la bola colisiona con un objeto del tipo Block
     private boolean collidesWith(Block block) {
         boolean intersectaX = (block.getX() + block.getWidth() >= x - size) &&
-                (block.getX() <= x + size);
+            (block.getX() <= x + size);
         boolean intersectaY = (block.getY() + block.getHeight() >= y - size) &&
-                (block.getY() <= y + size);
+            (block.getY() <= y + size);
         return intersectaX && intersectaY;
     }
 
     // Método privado que verifica si la bola colisiona con la paleta
     private boolean collidesWith(Paddle paddle) {
         boolean intersectaX = (paddle.getX() + paddle.getWidth() >= x - size) &&
-                (paddle.getX() <= x + size);
+            (paddle.getX() <= x + size);
         boolean intersectaY = (paddle.getY() + paddle.getHeight() >= y - size) &&
-                (paddle.getY() <= y + size);
+            (paddle.getY() <= y + size);
         return intersectaX && intersectaY;
     }
 }
