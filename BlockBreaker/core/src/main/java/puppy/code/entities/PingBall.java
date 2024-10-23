@@ -16,6 +16,10 @@ public class PingBall {
     private Color color = Color.valueOf("0f380f");
     private boolean estaQuieto;
     private int velocidadMinima = 2; // Velocidad mínima para evitar que la bola se detenga
+    private boolean active;
+    private int velocidadOriginalX;
+    private int velocidadOriginalY;
+
 
     public PingBall(int x, int y, int size, int xSpeed, int ySpeed, boolean iniciaQuieto) {
         this.x = x;
@@ -23,7 +27,10 @@ public class PingBall {
         this.size = size;
         this.xSpeed = xSpeed;
         this.ySpeed = ySpeed;
+        velocidadOriginalX = xSpeed;
+        velocidadOriginalY = ySpeed;
         estaQuieto = iniciaQuieto;
+
     }
 
     // Método para verificar si la bola está quieta
@@ -82,10 +89,25 @@ public class PingBall {
         System.out.println("Velocidad reducida: xSpeed=" + xSpeed + ", ySpeed=" + ySpeed);
     }
 
+    public void restaurarVelocidad() {
+        xSpeed = velocidadOriginalX;
+        ySpeed = velocidadOriginalY;
+        System.out.println("Velocidad restaurada: xSpeed=" + xSpeed + ", ySpeed=" + ySpeed);
+    }
+
+
     // Método para dibujar la bola en pantalla
     public void draw(ShapeRenderer shapeRenderer) {
         shapeRenderer.setColor(color);
         shapeRenderer.circle(x, y, size);
+    }
+    public boolean isActive() {
+        return active;
+    }
+
+    // Method to set the ball's active state
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     // Actualiza la posición de la bola en función de su velocidad

@@ -1,16 +1,15 @@
 package puppy.code.game;
 
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.utils.Timer;
 import puppy.code.blocks.Block;
 import puppy.code.blocks.HardBlock;
 import puppy.code.blocks.NormalBlock;
 import puppy.code.entities.Paddle;
 import puppy.code.entities.PingBall;
 import puppy.code.interfaces.Damageable;
-import puppy.code.screens.MainMenuScreen;
-import puppy.code.screens.GameOverScreen;
-import puppy.code.screens.NextLevelScreen;
-import puppy.code.screens.TutorialScreen;
+import puppy.code.powerups.SlowBallPowerUp;
+import puppy.code.screens.*;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -24,9 +23,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 import puppy.code.powerups.ExtraBallPowerUp;
-import puppy.code.powerups.SlowBallPowerUp;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class BlockBreakerGame extends ApplicationAdapter {
     private OrthographicCamera camera;
@@ -39,8 +38,9 @@ public class BlockBreakerGame extends ApplicationAdapter {
     private int vidas;
     private int puntaje;
 
-    private boolean extraBallActivated = false;  // Bandera para saber si el PowerUp de bola extra ya se activó
-    private boolean slowBallActivated = false;   // Bandera para saber si el PowerUp de ralentización ya se activó
+    private boolean powerUpBolaExtraActivado = false; // Bandera para saber si el PowerUp de bola extra ya se activó
+
+    private boolean powerUpRalentizacionActivado = false;   // Bandera para saber si el PowerUp de ralentización ya se activó
 
     private int nivel;
     private int puntajeMaximo;
@@ -50,13 +50,15 @@ public class BlockBreakerGame extends ApplicationAdapter {
     private Color backgroundColor;
 
     private NextLevelScreen nextLevelScreen;
-
+    private PauseScreen pauseScreen;
     private MainMenuScreen mainMenuScreen;
     private GameOverScreen gameOverScreen;
+    private boolean paused = false;
     private TutorialScreen tutorialScreen;  // Pantalla de tutorial
     private boolean menuPrincipal = true;
     private boolean gameOver = false;
     private boolean tutorialActivo = false; // Estado para indicar si el tutorial está activo
+    private List<PingBall> bolasActivas = new ArrayList<>(); //Lista de bolas activas
 
     /* Musica */
     public static Music breakSound;
@@ -78,6 +80,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
         gameOverScreen = new GameOverScreen(this);
         tutorialScreen = new TutorialScreen(this);  // Inicializar la pantalla de tutorial
         nextLevelScreen = new NextLevelScreen(this);
+        pauseScreen = new PauseScreen(this);
         breakSound = Gdx.audio.newMusic(Gdx.files.internal("break_sound.mp3"));
 
         iniciarJuego();
@@ -91,12 +94,17 @@ public class BlockBreakerGame extends ApplicationAdapter {
         nivelCompletado = false;
         gameOver = false;
 
-        ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, 41, 10, 5, 7, true);
-        pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
+        pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10); // Initialize pad first
+        int velocidadBase = 5 + nivel; // Aumentar la velocidad base en función del nivel
+        ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, pad.getY() + pad.getHeight() + 11, 10, velocidadBase, velocidadBase, true);
+
         crearBloques(2 + nivel);
+        bolasActivas.clear(); // Limpiar bolas activas
+        bolasActivas.add(ball); // Añadir la bola principal a la lista de bolas activas
 
         menuPrincipal = true;
         tutorialActivo = false;  // Asegurarse de que el tutorial no esté activo
+
     }
 
     public void crearBloques(int filas) {
@@ -116,13 +124,35 @@ public class BlockBreakerGame extends ApplicationAdapter {
         }
     }
 
-    private void activarPowerUpBolaExtra() {
-        ExtraBallPowerUp extraBallPowerUp = new ExtraBallPowerUp();
-        extraBallPowerUp.activate(this);
+    private void activarPowerUpBolaExtra()
+    {
+        if (!powerUpBolaExtraActivado) {
+            ExtraBallPowerUp extraBallPowerUp = new ExtraBallPowerUp();
+            extraBallPowerUp.activate(this);
+            powerUpBolaExtraActivado = true;
+            System.out.println("PowerUp: Bola extra activado!");
+        }
+    }
+    private void activarPowerUpRalentizacion() {
+        if (!powerUpRalentizacionActivado) {
+            SlowBallPowerUp slowBallPowerUp = new SlowBallPowerUp();
+            slowBallPowerUp.activate(this);
+            powerUpRalentizacionActivado = true;
+            System.out.println("PowerUp: Ralentización activado!");
+        }
     }
 
     @Override
     public void render() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            paused = !paused;
+        }
+
+        if (paused) {
+            pauseScreen.render();  // Show the pause screen
+            return;  // Skip the rest of the render method
+        }
+
         if (menuPrincipal) {
             mainMenuScreen.render();  // Show the main menu
         } else if (gameOver) {
@@ -142,30 +172,37 @@ public class BlockBreakerGame extends ApplicationAdapter {
             shape.begin(ShapeRenderer.ShapeType.Filled);
             pad.draw(shape);
 
-            if (ball.estaQuieto()) {
-                ball.setXY(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11);
-                if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-                    ball.setEstaQuieto(false);
-                }
-            } else {
-                ball.update();
-            }
-
-            if (ball.getY() < 0) {
-                vidas--;
-                if (puntaje > puntajeMaximo) {
-                    puntajeMaximo = puntaje;
-                }
-                if (vidas < 0) {
-                    gameOver = true;
+            for (PingBall bola : bolasActivas) {
+                if (bola.estaQuieto()) {
+                    bola.setXY(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11);
+                    if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+                        bola.setEstaQuieto(false);
+                    }
                 } else {
-                    ball = new PingBall(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11, 10, 5, 7, true);
+                    bola.update();
                 }
-            }
 
-            for (Block b : blocks) {
-                b.draw(shape);
-                ball.checkCollision(b);
+                // Chequeo de colisiones con los bordes
+                if (bola.getY() < 0) {
+                    vidas--;
+                    if (puntaje > puntajeMaximo) {
+                        puntajeMaximo = puntaje;
+                    }
+                    if (vidas < 0) {
+                        gameOver = true;
+                    } else {
+                        bola.setXY(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11);
+                        bola.setEstaQuieto(true);
+                    }
+                }
+
+                for (Block b : blocks) {
+                    b.draw(shape);
+                    bola.checkCollision(b);
+                }
+
+                bola.checkCollision(pad);
+                bola.draw(shape);
             }
 
             for (int i = 0; i < blocks.size(); i++) {
@@ -180,25 +217,12 @@ public class BlockBreakerGame extends ApplicationAdapter {
                 }
             }
 
-
-            // **Activar el PowerUp de Bola Extra a los 10 puntos**
-            if (puntaje >= 10 && !extraBallActivated) {
-                extraBallActivated = true;
-                activarPowerUpBolaExtra();  // Método que activa la bola extra
-            }
-
-            // **Activar el PowerUp de Velocidad Lenta a los 20 puntos**
-            if (puntaje >= 20 && !slowBallActivated) {
-                slowBallActivated = true;
-                reducirVelocidadBolas();  // Método que reduce la velocidad de las bolas
-            }
+            activarPowerUps(); // Asegúrate de que este método esté definido correctamente
 
             if (blocks.isEmpty()) {
                 nivelCompletado = true;  // Marcar el nivel como completado
             }
 
-            ball.checkCollision(pad);
-            ball.draw(shape);
             shape.end();
 
             batch.begin();
@@ -211,35 +235,73 @@ public class BlockBreakerGame extends ApplicationAdapter {
         }
     }
 
+
+
     // Método para verificar y activar los power-ups
     private void activarPowerUps() {
-        // Activar PowerUp de bola extra al llegar a 300 puntos
-        if (puntaje >= 2 && !extraBallActivated) {
-            ExtraBallPowerUp extraBallPowerUp = new ExtraBallPowerUp();
-            extraBallPowerUp.activate(this);
-            extraBallActivated = true;
+        // Activar PowerUp de bola extra cada 20 puntos
+        if (puntaje >= 20 && puntaje % 20 == 0 && !powerUpBolaExtraActivado) {
+            activarPowerUpBolaExtra();  // Activar el PowerUp de bola extra
+            System.out.println("PowerUp: Bola extra activado!");
         }
 
-        // Activar PowerUp de ralentización al llegar a 500 puntos
-        if (puntaje >= 2 && !slowBallActivated) {
-            SlowBallPowerUp slowBallPowerUp = new SlowBallPowerUp();
-            slowBallPowerUp.activate(this);
-            slowBallActivated = true;
+        // Activar PowerUp de ralentización cada 10 puntos
+        if (puntaje >= 10 && puntaje % 10 == 0 && !powerUpRalentizacionActivado) {
+            activarPowerUpRalentizacion();  // Activar el PowerUp de ralentización
+            System.out.println("PowerUp: Ralentización activado!");
+        }
+
+        // Reiniciar el estado de los power-ups si es necesario, por ejemplo al cambiar de nivel
+        if (nivelCompletado) {
+            powerUpBolaExtraActivado = false;
+            powerUpRalentizacionActivado = false;
         }
     }
 
     public void agregarNuevaBola() {
-        // Lógica para agregar una nueva bola al juego
-        // Ejemplo: crear una nueva instancia de PingBall y añadirla al juego
-        System.out.println("Nueva bola añadida al juego.");
+        // Verificar que haya bolas en juego
+        if (!bolasActivas.isEmpty()) {
+            // Elegir la primera bola existente para duplicar
+            PingBall bolaOriginal = bolasActivas.get(0);
+
+            // Crear una nueva bola con las mismas propiedades que la bola original
+            PingBall nuevaBola = new PingBall(
+                bolaOriginal.getX(),  // Misma posición que la original
+                bolaOriginal.getY(),
+                bolaOriginal.getSize(),
+                bolaOriginal.getXSpeed(),
+                bolaOriginal.getYSpeed(),
+                false); // La nueva bola no es la principal
+
+            // Añadir la nueva bola a la lista de bolas activas
+            bolasActivas.add(nuevaBola);
+            System.out.println("Bola duplicada: nueva bola añadida al juego.");
+        }
+        System.out.println(bolasActivas.size() + " bolas en juego.");
+    }
+    public void reducirVelocidadBolas() {
+        // Incluye la bola principal en la lista de bolas activas si no está ya
+        if (!bolasActivas.contains(ball)) {
+            bolasActivas.add(ball);
+        }
+
+        for (PingBall bola : bolasActivas) {
+            bola.reducirVelocidad(); // Método que reduce la velocidad
+        }
+        System.out.println("Velocidad de todas las bolas reducida.");
+        // Programar la restauración de la velocidad después de 5 segundos
+        Timer.schedule(new Timer.Task() {
+            @Override
+            public void run() {
+                for (PingBall bola : bolasActivas) {
+                    bola.restaurarVelocidad(); // Método que restaura la velocidad original
+                }
+                System.out.println("Velocidad de todas las bolas restaurada.");
+            }
+        }, 5); // 5
     }
 
-    public void reducirVelocidadBolas() {
-        // Lógica para reducir la velocidad de las bolas
-        // Ejemplo: reducir la velocidad de la bola actual
-        ball.reducirVelocidad();
-        System.out.println("Velocidad de las bolas reducida.");
-    }
+
 
     public void startGame() {
         menuPrincipal = false;
@@ -251,6 +313,8 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
         ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, 41, 10, 5, 7, true);
         pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
+        bolasActivas.clear(); // Limpiar bolas activas
+        bolasActivas.add(ball); // Añadir la bola principal a la lista de bolas activas
         crearBloques(2 + nivel);
     }
 
@@ -264,19 +328,25 @@ public class BlockBreakerGame extends ApplicationAdapter {
         iniciarJuego();
     }
 
-    public void iniciarNuevoJuego()
-    {
+    public void iniciarNuevoJuego() {
         nivel = 1;
         vidas = 3;
         puntaje = 0;  // Reiniciar solo el puntaje actual
         nivelCompletado = false;
         gameOver = false;
+        blocks.clear(); // Limpiar bloques
+        bolasActivas.clear(); // Limpiar bolas activas
 
         // Reiniciar la bola y la paleta
-        ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, 41, 10, 5, 7, true);
+        ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, pad.getY() + pad.getHeight() + 11, 10, 5, 7, true);
         pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
+        bolasActivas.add(ball); // Añadir la bola principal a la lista de bolas activas
 
         crearBloques(2 + nivel);  // Crear nuevos bloques
+
+        // Reiniciar banderas de power-ups
+        powerUpBolaExtraActivado = false;
+        powerUpRalentizacionActivado = false;
     }
 
     // Método para activar la pantalla de tutorial
@@ -291,17 +361,35 @@ public class BlockBreakerGame extends ApplicationAdapter {
         crearBloques(2 + nivel);  // Create new blocks for the next level
         nivelCompletado = false;  // Reset the level completed flag
     }
+    public BitmapFont getFont() {
+        return font;
+    }
+
+
 
     @Override
     public void dispose() {
         mainMenuScreen.dispose();
         gameOverScreen.dispose();
         tutorialScreen.dispose();  // Liberar recursos del tutorial
+        pauseScreen.dispose();
         batch.dispose();
         font.dispose();
         backgroundTexture.dispose();
         shape.dispose();
         breakSound.dispose();
+    }
+
+    public int getPuntaje() {
+        return puntaje;
+    }
+
+    public int getVidas() {
+        return vidas;
+    }
+
+    public int getNivel() {
+        return nivel;
     }
 
 }
