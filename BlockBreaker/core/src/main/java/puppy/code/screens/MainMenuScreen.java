@@ -40,7 +40,7 @@ public class MainMenuScreen {
         if (Gdx.input.isKeyPressed(Input.Keys.NUM_1)) {
             game.startGame();  // Iniciar el juego
         } else if (Gdx.input.isKeyPressed(Input.Keys.NUM_2)) {
-            game.setScreen(tutorialScreen);  // Cambiar a la pantalla del tutorial
+            game.activarTutorial();  // Activar la pantalla del tutorial
         } else if (Gdx.input.isKeyPressed(Input.Keys.NUM_3)) {
             Gdx.app.exit();  // Salir del juego
         }

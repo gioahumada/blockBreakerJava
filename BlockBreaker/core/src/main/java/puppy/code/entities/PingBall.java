@@ -13,7 +13,7 @@ public class PingBall {
     private int size;
     private int xSpeed;
     private int ySpeed;
-    private Color color = Color.valueOf("0f380f");
+    private Color color = Color.RED;
     private boolean estaQuieto;
     private int velocidadMinima = 2; // Velocidad mínima para evitar que la bola se detenga
     private boolean active;
@@ -85,14 +85,17 @@ public class PingBall {
         if (Math.abs(ySpeed) < velocidadMinima) {
             ySpeed = velocidadMinima * (ySpeed < 0 ? -1 : 1); // Mantener la dirección
         }
+    }
 
-        System.out.println("Velocidad reducida: xSpeed=" + xSpeed + ", ySpeed=" + ySpeed);
+    public void aumentarVelocidad() {
+        // Aumenta la velocidad en un 50%, por ejemplo
+        xSpeed = (int)(xSpeed * 1.5);
+        ySpeed = (int)(ySpeed * 1.5);
     }
 
     public void restaurarVelocidad() {
         xSpeed = velocidadOriginalX;
         ySpeed = velocidadOriginalY;
-        System.out.println("Velocidad restaurada: xSpeed=" + xSpeed + ", ySpeed=" + ySpeed);
     }
 
 
