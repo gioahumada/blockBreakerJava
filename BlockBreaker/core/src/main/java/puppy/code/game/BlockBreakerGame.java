@@ -1,7 +1,7 @@
-
 package puppy.code.game;
 
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.utils.Timer;
 import puppy.code.blocks.Block;
 import puppy.code.blocks.HardBlock;
@@ -39,8 +39,8 @@ public class BlockBreakerGame extends ApplicationAdapter {
     private int vidas;
     private int puntaje;
 
-    private boolean powerUpBolaExtraActivado = false; // Bandera para saber si el PowerUp de bola extra ya se activó
-    private boolean powerUpRalentizacionActivado = false;   // Bandera para saber si el PowerUp de ralentización ya se activó
+    private boolean powerUpBolaExtraActivado = false;
+    private boolean powerUpRalentizacionActivado = false;
 
     private int nivel;
     private int puntajeMaximo;
@@ -54,16 +54,23 @@ public class BlockBreakerGame extends ApplicationAdapter {
     private MainMenuScreen mainMenuScreen;
     private GameOverScreen gameOverScreen;
     private boolean paused = false;
-    private TutorialScreen tutorialScreen;  // Pantalla de tutorial
+    private TutorialScreen tutorialScreen;
     private boolean menuPrincipal = true;
     private boolean gameOver = false;
-    private boolean tutorialActivo = false; // Estado para indicar si el tutorial está activo
-    private List<PingBall> bolasActivas = new ArrayList<>(); // Lista de bolas activas
+    private boolean tutorialActivo = false;
+    private List<PingBall> bolasActivas = new ArrayList<>();
 
-    private ArrayList<FallingPowerUp> fallingPowerUps = new ArrayList<>(); // Lista de power-ups en caída
+    private ArrayList<FallingPowerUp> fallingPowerUps = new ArrayList<>();
 
     /* Musica */
     public static Music breakSound;
+    public Music mainMenuMusic;
+    public Music tutorialMusic;
+    public Music gameMusic;
+    private Sound hardBlockHitSound;
+    private Sound powerUpPickSound;
+    private Sound paddleHitSound;
+    private Music gameOverMusic;
 
     @Override
     public void create() {
@@ -80,10 +87,20 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
         mainMenuScreen = new MainMenuScreen(this);
         gameOverScreen = new GameOverScreen(this);
-        tutorialScreen = new TutorialScreen(this);  // Inicializar la pantalla de tutorial
+        tutorialScreen = new TutorialScreen(this);
         nextLevelScreen = new NextLevelScreen(this);
         pauseScreen = new PauseScreen(this);
+
         breakSound = Gdx.audio.newMusic(Gdx.files.internal("break_sound.mp3"));
+        mainMenuMusic = Gdx.audio.newMusic(Gdx.files.internal("main_menu_music.mp3"));
+        tutorialMusic = Gdx.audio.newMusic(Gdx.files.internal("tutorial_music.mp3"));
+        gameMusic = Gdx.audio.newMusic(Gdx.files.internal("game_music.mp3"));
+        hardBlockHitSound = Gdx.audio.newSound(Gdx.files.internal("hard_block_hit.mp3"));
+        powerUpPickSound = Gdx.audio.newSound(Gdx.files.internal("powerup_pick.mp3"));
+        paddleHitSound = Gdx.audio.newSound(Gdx.files.internal("paddle_hit.mp3"));
+        gameOverMusic = Gdx.audio.newMusic(Gdx.files.internal("game_over.mp3"));
+        mainMenuMusic.setLooping(true);
+        mainMenuMusic.play();
 
         iniciarJuego();
     }
@@ -96,16 +113,16 @@ public class BlockBreakerGame extends ApplicationAdapter {
         nivelCompletado = false;
         gameOver = false;
 
-        pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10); // Initialize pad first
-        int velocidadBase = 5 + nivel; // Aumentar la velocidad base en función del nivel
+        pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
+        int velocidadBase = 5 + nivel;
         ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, pad.getY() + pad.getHeight() + 11, 10, velocidadBase, velocidadBase, true);
 
         crearBloques(2 + nivel);
-        bolasActivas.clear(); // Limpiar bolas activas
-        bolasActivas.add(ball); // Añadir la bola principal a la lista de bolas activas
+        bolasActivas.clear();
+        bolasActivas.add(ball);
 
         menuPrincipal = true;
-        tutorialActivo = false;  // Asegurarse de que el tutorial no esté activo
+        tutorialActivo = false;
     }
 
     public void crearBloques(int filas) {
@@ -128,47 +145,71 @@ public class BlockBreakerGame extends ApplicationAdapter {
     @Override
     public void render() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            paused = !paused;
+            if (!menuPrincipal && !gameOver && !tutorialActivo && !nivelCompletado) {
+                paused = !paused;
+            }
         }
 
         if (paused) {
-            pauseScreen.render();  // Show the pause screen
-            return;  // Skip the rest of the render method
+            pauseScreen.render();
+            return;
         }
 
         if (menuPrincipal) {
-            mainMenuScreen.render();  // Show the main menu
+            mainMenuScreen.render();
         } else if (gameOver) {
-            gameOverScreen.render(puntajeMaximo);  // Show the Game Over screen
+            gameOverScreen.render(puntajeMaximo);
         } else if (tutorialActivo) {
-            tutorialScreen.render();  // Show the tutorial screen if active
+            tutorialScreen.render();
         } else if (nivelCompletado) {
-            nextLevelScreen.render(nivel);  // Show the Next Level screen
+            nextLevelScreen.render(nivel);
         } else {
             Gdx.gl.glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+            // Dibujar el fondo
             batch.begin();
             batch.draw(backgroundTexture, 0, 0, 800, 600);
             batch.end();
 
+            // Dibujar elementos con ShapeRenderer
             shape.begin(ShapeRenderer.ShapeType.Filled);
             pad.draw(shape);
 
-            // Dibujar y actualizar power-ups
-            for (FallingPowerUp powerUp : fallingPowerUps) {
+            for (PingBall bola : new ArrayList<>(bolasActivas)) {
+                bola.draw(shape);
+            }
+
+            for (Block b : blocks) {
+                b.draw(shape);
+            }
+
+            shape.end();
+
+            // Dibujar y actualizar power-ups con SpriteBatch
+            batch.begin();
+
+            for (FallingPowerUp powerUp : new ArrayList<>(fallingPowerUps)) {
                 powerUp.update();
-                powerUp.draw(shape);
+                powerUp.draw(batch);
 
                 // Verificar si el paddle recoge el power-up
                 if (powerUp.collidesWith(pad)) {
                     powerUp.activate(this);
                     fallingPowerUps.remove(powerUp);
-                    break; // Evitar modificar la lista mientras se itera
+                    powerUp.dispose(); // Liberar recursos
+
+                    // Reproducir sonido de recolección de power-up
+                    powerUpPickSound.play();
+
+                    break;
                 }
             }
 
-            for (PingBall bola : bolasActivas) {
+            batch.end();
+
+            // Actualizar lógica de juego (colisiones, movimientos, etc.)
+            for (PingBall bola : new ArrayList<>(bolasActivas)) {
                 if (bola.estaQuieto()) {
                     bola.setXY(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11);
                     if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
@@ -180,25 +221,37 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
                 // Chequeo de colisiones con los bordes
                 if (bola.getY() < 0) {
-                    vidas--;
-                    if (puntaje > puntajeMaximo) {
-                        puntajeMaximo = puntaje;
-                    }
-                    if (vidas < 0) {
-                        gameOver = true;
-                    } else {
-                        bola.setXY(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11);
-                        bola.setEstaQuieto(true);
-                    }
+                    bolasActivas.remove(bola);
+                    break;
                 }
 
                 for (Block b : blocks) {
-                    b.draw(shape);
                     bola.checkCollision(b);
                 }
 
                 bola.checkCollision(pad);
-                bola.draw(shape);
+            }
+
+            // Si no quedan pelotas activas, restar una vida y reiniciar
+            if (bolasActivas.isEmpty()) {
+                vidas--;
+                if (puntaje > puntajeMaximo) {
+                    puntajeMaximo = puntaje;
+                }
+                if (vidas < 0) {
+                    gameOver = true;
+
+                    // Detener música del juego y reproducir música de Game Over
+                    gameMusic.stop();
+                    gameOverMusic.play();
+                } else {
+                    // Crear una nueva pelota en estado quieto sobre la paleta
+                    PingBall nuevaPelota = new PingBall(
+                        pad.getX() + pad.getWidth() / 2 - 5,
+                        pad.getY() + pad.getHeight() + 11,
+                        10, 5 + nivel, 7 + nivel, true);
+                    bolasActivas.add(nuevaPelota);
+                }
             }
 
             // Remover bloques destruidos y generar power-ups
@@ -209,20 +262,17 @@ public class BlockBreakerGame extends ApplicationAdapter {
                     if (damageable.isDestroyed()) {
                         puntaje++;
                         blocks.remove(b);
-                        generarPowerUp(b.getX(), b.getY());  // Generar power-up al destruir un bloque
+                        generarPowerUp(b.getX(), b.getY());
                         i--;
                     }
                 }
             }
 
-            activarPowerUps(); // Asegúrate de que este método esté definido correctamente
-
             if (blocks.isEmpty()) {
-                nivelCompletado = true;  // Marcar el nivel como completado
+                nivelCompletado = true;
             }
 
-            shape.end();
-
+            // Dibujar texto de puntaje, vidas y nivel
             batch.begin();
             font.getData().setScale(2);
             font.setColor(Color.valueOf("9bbc0f"));
@@ -233,24 +283,19 @@ public class BlockBreakerGame extends ApplicationAdapter {
         }
     }
 
-    // Método para verificar y activar los power-ups
-    private void activarPowerUps() {
-        // Aquí podrías implementar la lógica para activar ciertos power-ups según el puntaje o nivel
-    }
-
     // Método para generar power-ups aleatorios
     private void generarPowerUp(int x, int y) {
         double random = Math.random();
         if (random < 0.2) {  // 20% de probabilidad de generar un power-up
             if (Math.random() < 0.5) {
-                fallingPowerUps.add(new TripleBallPowerUp(x, y));  // Añadir power-up de 3 bolas
+                fallingPowerUps.add(new TripleBallPowerUp(x, y));
             } else {
-                fallingPowerUps.add(new SpeedUpPowerUp(x, y));     // Añadir power-up de velocidad
+                fallingPowerUps.add(new SpeedUpPowerUp(x, y));
             }
         }
     }
 
-    public void agregarNuevaBola() {
+    public void agregarNuevaBola(int deltaXSpeed) {
         // Verificar que haya bolas en juego
         if (!bolasActivas.isEmpty()) {
             // Elegir la primera bola existente para duplicar
@@ -258,12 +303,12 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
             // Crear una nueva bola con las mismas propiedades que la bola original
             PingBall nuevaBola = new PingBall(
-                bolaOriginal.getX(),  // Misma posición que la original
+                bolaOriginal.getX(),
                 bolaOriginal.getY(),
                 bolaOriginal.getSize(),
-                bolaOriginal.getXSpeed(),
+                bolaOriginal.getXSpeed() + deltaXSpeed,
                 bolaOriginal.getYSpeed(),
-                false); // La nueva bola no es la principal
+                false);
 
             // Añadir la nueva bola a la lista de bolas activas
             bolasActivas.add(nuevaBola);
@@ -278,10 +323,10 @@ public class BlockBreakerGame extends ApplicationAdapter {
         puntajeMaximo = 0;
         nivelCompletado = false;
 
-        ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, 41, 10, 5, 7, true);
         pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
-        bolasActivas.clear(); // Limpiar bolas activas
-        bolasActivas.add(ball); // Añadir la bola principal a la lista de bolas activas
+        ball = new PingBall(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11, 10, 5 + nivel, 7 + nivel, true);
+        bolasActivas.clear();
+        bolasActivas.add(ball);
         crearBloques(2 + nivel);
     }
 
@@ -298,30 +343,41 @@ public class BlockBreakerGame extends ApplicationAdapter {
     public void iniciarNuevoJuego() {
         nivel = 1;
         vidas = 3;
-        puntaje = 0;  // Reiniciar solo el puntaje actual
+        puntaje = 0;
         nivelCompletado = false;
         gameOver = false;
-        blocks.clear(); // Limpiar bloques
-        bolasActivas.clear(); // Limpiar bolas activas
+        blocks.clear();
+        bolasActivas.clear();
 
-        // Reiniciar la bola y la paleta
-        ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, pad.getY() + pad.getHeight() + 11, 10, 5, 7, true);
         pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
-        bolasActivas.add(ball); // Añadir la bola principal a la lista de bolas activas
+        ball = new PingBall(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11, 10, 5 + nivel, 7 + nivel, true);
+        bolasActivas.add(ball);
 
-        crearBloques(2 + nivel);  // Crear nuevos bloques
+        crearBloques(2 + nivel);
 
-        // Reiniciar banderas de power-ups
         powerUpBolaExtraActivado = false;
         powerUpRalentizacionActivado = false;
     }
 
     public void cargarSiguienteNivel() {
-        nivel++;  // Increment the level
-        ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, 41, 10, 5, 7, true);  // Reset ball position
-        pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);  // Reset paddle position
-        crearBloques(2 + nivel);  // Create new blocks for the next level
-        nivelCompletado = false;  // Reset the level completed flag
+        nivel++;
+        nivelCompletado = false;
+
+        // Reiniciar la paleta
+        pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
+
+        // Reiniciar la pelota y establecerla en estado quieto
+        ball = new PingBall(
+            pad.getX() + pad.getWidth() / 2 - 5,
+            pad.getY() + pad.getHeight() + 11,
+            10, 5 + nivel, 7 + nivel, true);
+
+        // Limpiar y añadir la pelota a la lista de bolas activas
+        bolasActivas.clear();
+        bolasActivas.add(ball);
+
+        // Crear nuevos bloques para el siguiente nivel
+        crearBloques(2 + nivel);
     }
 
     public List<PingBall> getBolasActivas() {
@@ -336,13 +392,26 @@ public class BlockBreakerGame extends ApplicationAdapter {
     public void dispose() {
         mainMenuScreen.dispose();
         gameOverScreen.dispose();
-        tutorialScreen.dispose();  // Liberar recursos del tutorial
+        tutorialScreen.dispose();
         pauseScreen.dispose();
         batch.dispose();
         font.dispose();
         backgroundTexture.dispose();
         shape.dispose();
         breakSound.dispose();
+
+        mainMenuMusic.dispose();
+        tutorialMusic.dispose();
+        gameMusic.dispose();
+        hardBlockHitSound.dispose();
+        powerUpPickSound.dispose();
+        paddleHitSound.dispose();
+        gameOverMusic.dispose();
+
+        // Liberar recursos de los power-ups
+        for (FallingPowerUp powerUp : fallingPowerUps) {
+            powerUp.dispose();
+        }
     }
 
     public int getPuntaje() {
@@ -361,6 +430,4 @@ public class BlockBreakerGame extends ApplicationAdapter {
         tutorialActivo = true;
         menuPrincipal = false;
     }
-
-
 }

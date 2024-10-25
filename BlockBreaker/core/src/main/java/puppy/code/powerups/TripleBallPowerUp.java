@@ -1,19 +1,17 @@
 package puppy.code.powerups;
 
-import com.badlogic.gdx.graphics.Color;
 import puppy.code.game.BlockBreakerGame;
 
 public class TripleBallPowerUp extends FallingPowerUp {
 
     public TripleBallPowerUp(int x, int y) {
-        super(x, y, 20, 1, Color.BLUE);  // Tamaño 20, velocidad de caída más lenta (1)
+        super(x, y, 20, 1, "multiplicator.png");  // Usar la textura "multiplicator.png"
     }
 
     @Override
     public void activate(BlockBreakerGame game) {
-        // Crear 3 bolas nuevas adicionales
-        for (int i = 0; i < 3; i++) {
-            game.agregarNuevaBola();  // Método que añade una nueva bola al juego
-        }
+        // Crear dos bolas nuevas adicionales con velocidades ligeramente diferentes
+        game.agregarNuevaBola(2);  // Bola con velocidad X aumentada en 2
+        game.agregarNuevaBola(-2); // Bola con velocidad X disminuida en 2
     }
 }

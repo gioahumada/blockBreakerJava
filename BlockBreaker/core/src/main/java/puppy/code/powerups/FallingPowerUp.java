@@ -1,27 +1,27 @@
 package puppy.code.powerups;
 
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import puppy.code.entities.Paddle;
 import puppy.code.game.BlockBreakerGame;
 
 public abstract class FallingPowerUp {
     protected int x, y, size;
     protected int ySpeed;
-    protected Color color;
+    protected Texture texture;
 
-    public FallingPowerUp(int x, int y, int size, int ySpeed, Color color) {
+    public FallingPowerUp(int x, int y, int size, int ySpeed, String texturePath) {
         this.x = x;
         this.y = y;
         this.size = size;
         this.ySpeed = ySpeed;
-        this.color = color;
+        this.texture = new Texture(Gdx.files.internal(texturePath));
     }
 
     // Método para dibujar el power-up
-    public void draw(ShapeRenderer shapeRenderer) {
-        shapeRenderer.setColor(color);
-        shapeRenderer.rect(x, y, size, size);
+    public void draw(SpriteBatch batch) {
+        batch.draw(texture, x, y, size, size);
     }
 
     // Actualizar la posición del power-up
@@ -37,4 +37,9 @@ public abstract class FallingPowerUp {
 
     // Activar el efecto del power-up
     public abstract void activate(BlockBreakerGame game);
+
+    // Liberar recursos
+    public void dispose() {
+        texture.dispose();
+    }
 }

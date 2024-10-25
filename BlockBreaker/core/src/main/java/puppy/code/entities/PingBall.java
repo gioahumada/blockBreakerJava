@@ -101,9 +101,15 @@ public class PingBall {
 
     // Método para dibujar la bola en pantalla
     public void draw(ShapeRenderer shapeRenderer) {
+        // Dibujar el borde
+        shapeRenderer.setColor(Color.valueOf("306230")); // Color del borde verde
+        shapeRenderer.circle(x, y, size + 2); // Dibujar círculo ligeramente más grande para el borde
+
+        // Dibujar la bola interna
         shapeRenderer.setColor(color);
         shapeRenderer.circle(x, y, size);
     }
+
     public boolean isActive() {
         return active;
     }

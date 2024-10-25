@@ -38,9 +38,15 @@ public class MainMenuScreen {
 
         // Verificar si el usuario presiona el botón para empezar el juego o el tutorial
         if (Gdx.input.isKeyPressed(Input.Keys.NUM_1)) {
-            game.startGame();  // Iniciar el juego
+            game.mainMenuMusic.stop();
+            game.gameMusic.setLooping(true);
+            game.gameMusic.play();
+            game.startGame();
         } else if (Gdx.input.isKeyPressed(Input.Keys.NUM_2)) {
-            game.activarTutorial();  // Activar la pantalla del tutorial
+            game.mainMenuMusic.stop();
+            game.tutorialMusic.setLooping(true);
+            game.tutorialMusic.play();
+            game.activarTutorial();
         } else if (Gdx.input.isKeyPressed(Input.Keys.NUM_3)) {
             Gdx.app.exit();  // Salir del juego
         }

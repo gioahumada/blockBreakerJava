@@ -55,7 +55,9 @@ public class TutorialScreen {
 
         // Salir del tutorial con la tecla ESC
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            game.volverAlMenu();  // Volver al menú principal
+            game.tutorialMusic.stop();
+            game.mainMenuMusic.play();
+            game.volverAlMenu();
         }
     }
 
