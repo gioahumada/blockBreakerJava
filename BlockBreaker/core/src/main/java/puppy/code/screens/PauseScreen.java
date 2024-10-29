@@ -4,90 +4,110 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import puppy.code.game.BlockBreakerGame;
 
 public class PauseScreen {
+    private static final Color BACKGROUND_COLOR = new Color(0, 0, 0, 0.7f); // Fondo negro translúcido
+    private static final Color RECT_COLOR = Color.valueOf("306230");         // Verde oscuro
+    private static final Color SHADOW_COLOR = new Color(0, 0, 0, 0.5f);      // Sombra negra translúcida
+    private static final Color TEXT_COLOR = Color.valueOf("9bbc0f");         // Verde claro
+
     private BlockBreakerGame game;
     private SpriteBatch batch;
     private BitmapFont font;
     private ShapeRenderer shapeRenderer;
+    private GlyphLayout layout;
+
+    private static final int MARGIN = 50;
+    private static final int SCREEN_WIDTH = 800;
+    private static final int SCREEN_HEIGHT = 600;
+    private static final int RECT_WIDTH = SCREEN_WIDTH - 2 * MARGIN;
+    private static final int RECT_HEIGHT = SCREEN_HEIGHT - 2 * MARGIN;
+    private static final int SHADOW_OFFSET = 10;
+    private static final int TEXT_SPACING = 40; // Espaciado entre líneas de texto
 
     public PauseScreen(BlockBreakerGame game) {
         this.game = game;
         this.batch = new SpriteBatch();
         this.font = new BitmapFont();
-        this.font.getData().setScale(2.5f, 2.5f);  // Ajustamos el tamaño del texto
+        this.font.getData().setScale(2.0f);  // Ajustamos el tamaño del texto para mejor claridad
         this.shapeRenderer = new ShapeRenderer();
+        this.layout = new GlyphLayout();
     }
 
     public void render() {
-        // Color de fondo para el texto (usando uno de los colores de la imagen)
-        Color backgroundColor = Color.valueOf("306230");  // Fondo oscuro
-        Color textColor = Color.valueOf("9bbc0f"); // Color claro del texto
+        drawBackgroundOverlay();
+        drawShadowRectangle();
+        drawRoundedRectangle();
 
-        // Dimensiones del rectángulo verde, ajustado para centrado
-        int margin = 50;
-        int rectWidth = 800 - 2 * margin;
-        int rectHeight = 600 - 2 * margin;
-        int rectX = margin;
-        int rectY = margin;
+        // Comenzamos en una posición más alta para evitar que el texto se superponga
+        int textYPosition = SCREEN_HEIGHT / 2 + 150;
 
-        // Dibujar el rectángulo de fondo (verde)
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(backgroundColor);
-        shapeRenderer.rect(rectX, rectY, rectWidth, rectHeight);
-        shapeRenderer.end();
+        // Dibujamos cada línea con un espaciado adecuado para evitar colisiones
+        drawTextCentered("PAUSADO", textYPosition);
+        textYPosition -= TEXT_SPACING * 2;
 
-        // Iniciar el batch para dibujar el texto
-        batch.begin();
+        drawTextCentered("Presiona ESC para continuar", textYPosition);
+        textYPosition -= TEXT_SPACING;
 
-        // Variables comunes para facilitar el centrado relativo al fondo verde
-        float rectCenterX = rectX + rectWidth / 2;
-        float screenHeight = 600;
+        drawTextCentered("Presiona Q para salir", textYPosition);
+        textYPosition -= TEXT_SPACING * 2;
 
-        // Texto principal "PAUSADO" centrado con respecto al rectángulo verde
-        game.getFont().setColor(textColor);
-        String pausedText = "PAUSADO";
-        float pausedTextWidth = game.getFont().getRegion().getRegionWidth();
-        float pausedTextX = rectCenterX - (pausedTextWidth / 2);
-        float pausedTextY = screenHeight / 2 + 100;  // Centrado más alto
-        game.getFont().draw(batch, pausedText, pausedTextX, pausedTextY);
+        // Información de puntaje, vidas y nivel
+        drawTextCentered("PUNTAJE: " + game.getPuntaje(), textYPosition);
+        textYPosition -= TEXT_SPACING;
 
-        // Centrar y mostrar otros textos debajo del "PAUSADO", también centrados con respecto al fondo
-        String continueText = "Presiona ESC para continuar";
-        float continueTextWidth = game.getFont().getRegion().getRegionWidth();
-        float continueTextX = rectCenterX - (continueTextWidth / 2);
-        game.getFont().draw(batch, continueText, continueTextX, pausedTextY - 100);
+        drawTextCentered("VIDAS: " + game.getVidas(), textYPosition);
+        textYPosition -= TEXT_SPACING;
 
-        String quitText = "Presiona Q para salir";
-        float quitTextWidth = game.getFont().getRegion().getRegionWidth();
-        float quitTextX = rectCenterX - (quitTextWidth / 2);
-        game.getFont().draw(batch, quitText, quitTextX, pausedTextY - 150);
-
-        // Centrar puntaje, vidas y nivel también con respecto al rectángulo verde
-        String puntajeText = "PUNTAJE: " + game.getPuntaje();
-        float puntajeTextWidth = game.getFont().getRegion().getRegionWidth();
-        float puntajeTextX = rectCenterX - (puntajeTextWidth / 2);
-        game.getFont().draw(batch, puntajeText, puntajeTextX, pausedTextY + 150);
-
-        String vidasText = "VIDAS: " + game.getVidas();
-        float vidasTextWidth = game.getFont().getRegion().getRegionWidth();
-        float vidasTextX = rectCenterX - (vidasTextWidth / 2);
-        game.getFont().draw(batch, vidasText, vidasTextX, pausedTextY + 100);
-
-        String nivelText = "NIVEL: " + game.getNivel();
-        float nivelTextWidth = game.getFont().getRegion().getRegionWidth();
-        float nivelTextX = rectCenterX - (nivelTextWidth / 2);
-        game.getFont().draw(batch, nivelText, nivelTextX, pausedTextY + 50);
-
-        batch.end();
+        drawTextCentered("NIVEL: " + game.getNivel(), textYPosition);
 
         // Detectar tecla Q para salir
         if (Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
             Gdx.app.exit(); // Salir del programa
         }
+    }
+
+    private void drawBackgroundOverlay() {
+        // Fondo translúcido para oscurecer el juego mientras está en pausa
+        Gdx.gl.glClearColor(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b, BACKGROUND_COLOR.a);
+        Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT);
+    }
+
+    private void drawShadowRectangle() {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(SHADOW_COLOR);
+        shapeRenderer.rect(MARGIN + SHADOW_OFFSET, MARGIN - SHADOW_OFFSET, RECT_WIDTH, RECT_HEIGHT);
+        shapeRenderer.end();
+    }
+
+    private void drawRoundedRectangle() {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(RECT_COLOR);
+
+        // Dibujar el rectángulo principal con bordes redondeados simulados
+        int cornerRadius = 15;
+
+        shapeRenderer.rect(MARGIN + cornerRadius, MARGIN, RECT_WIDTH - 2 * cornerRadius, RECT_HEIGHT); // Centro
+        shapeRenderer.rect(MARGIN, MARGIN + cornerRadius, RECT_WIDTH, RECT_HEIGHT - 2 * cornerRadius); // Lados
+        shapeRenderer.circle(MARGIN + cornerRadius, MARGIN + cornerRadius, cornerRadius); // Esquina inferior izquierda
+        shapeRenderer.circle(MARGIN + RECT_WIDTH - cornerRadius, MARGIN + cornerRadius, cornerRadius); // Esquina inferior derecha
+        shapeRenderer.circle(MARGIN + cornerRadius, MARGIN + RECT_HEIGHT - cornerRadius, cornerRadius); // Esquina superior izquierda
+        shapeRenderer.circle(MARGIN + RECT_WIDTH - cornerRadius, MARGIN + RECT_HEIGHT - cornerRadius, cornerRadius); // Esquina superior derecha
+
+        shapeRenderer.end();
+    }
+
+    private void drawTextCentered(String text, float yPosition) {
+        batch.begin();
+        font.setColor(TEXT_COLOR);
+        layout.setText(font, text);
+        float textX = MARGIN + RECT_WIDTH / 2 - layout.width / 2;
+        font.draw(batch, text, textX, yPosition);
+        batch.end();
     }
 
     public void dispose() {
