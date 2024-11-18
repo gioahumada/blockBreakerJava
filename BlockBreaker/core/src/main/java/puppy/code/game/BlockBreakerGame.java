@@ -30,6 +30,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BlockBreakerGame extends ApplicationAdapter {
+    // Instancia única del juego
+    private static BlockBreakerGame instance;
+    
+    // Constructor privado para evitar instanciación directa
+    private BlockBreakerGame() {
+        // Constructor existente se mueve aquí
+    }
+    
+    // Método público estático para obtener la instancia única
+    public static BlockBreakerGame getInstance() {
+        if (instance == null) {
+            instance = new BlockBreakerGame();
+        }
+        return instance;
+    }
+    
     private OrthographicCamera camera;
     private SpriteBatch batch;
     private BitmapFont font;
