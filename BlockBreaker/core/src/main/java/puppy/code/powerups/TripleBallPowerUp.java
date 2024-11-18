@@ -13,5 +13,6 @@ public class TripleBallPowerUp extends FallingPowerUp {
         // Crear dos bolas nuevas adicionales con velocidades ligeramente diferentes
         game.agregarNuevaBola(2);  // Bola con velocidad X aumentada en 2
         game.agregarNuevaBola(-2); // Bola con velocidad X disminuida en 2
+        game.mostrarNotificacionPowerUp(this.getClass().getSimpleName());
     }
 }

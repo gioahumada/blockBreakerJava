@@ -16,7 +16,6 @@ public class SpeedUpPowerUp extends FallingPowerUp {
             bola.aumentarVelocidad();
         }
 
-        // Restaurar la velocidad después de 5 segundos
         Timer.schedule(new Timer.Task() {
             @Override
             public void run() {
@@ -25,6 +24,6 @@ public class SpeedUpPowerUp extends FallingPowerUp {
                 }
             }
         }, 5);
-        System.out.println("PowerUp activado: ¡Velocidad aumentada temporalmente!");
+        game.mostrarNotificacionPowerUp(this.getClass().getSimpleName());
     }
 }

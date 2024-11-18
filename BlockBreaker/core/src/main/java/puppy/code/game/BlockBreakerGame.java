@@ -11,6 +11,7 @@ import puppy.code.entities.PingBall;
 import puppy.code.interfaces.Damageable;
 import puppy.code.powerups.*;
 import puppy.code.screens.*;
+import puppy.code.ui.GameNotification;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -22,6 +23,10 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import puppy.code.strategy.MovementStrategy;
+import puppy.code.strategy.NormalMovement;
+import puppy.code.strategy.WaveMovement;
+import puppy.code.strategy.ZigZagMovement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,12 +34,12 @@ import java.util.List;
 public class BlockBreakerGame extends ApplicationAdapter {
     // Instancia única del juego
     private static BlockBreakerGame instance;
-    
+
     // Constructor privado para evitar instanciación directa
     private BlockBreakerGame() {
         // Constructor existente se mueve aquí
     }
-    
+
     // Método público estático para obtener la instancia única
     public static BlockBreakerGame getInstance() {
         if (instance == null) {
@@ -42,7 +47,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
         }
         return instance;
     }
-    
+
     private OrthographicCamera camera;
     private SpriteBatch batch;
     private BitmapFont font;
@@ -87,6 +92,13 @@ public class BlockBreakerGame extends ApplicationAdapter {
     private Sound paddleHitSound;
     private Music gameOverMusic;
 
+    private static final float TIEMPO_CAMBIO_ESTRATEGIA = 10f; // 10 segundos
+    private float tiempoEstrategia;
+    private MovementStrategy[] estrategias;
+    private int estrategiaActual;
+
+    private GameNotification gameNotification;
+
     @Override
     public void create() {
         camera = new OrthographicCamera();
@@ -118,6 +130,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
         mainMenuMusic.play();
 
         iniciarJuego();
+        gameNotification = new GameNotification();
     }
 
     public void iniciarJuego() {
@@ -295,6 +308,19 @@ public class BlockBreakerGame extends ApplicationAdapter {
             font.draw(batch, "VIDAS: " + vidas, Gdx.graphics.getWidth() - 150, 25);
             font.draw(batch, "NIVEL: " + nivel, Gdx.graphics.getWidth() / 2 - 40, 25);
             batch.end();
+
+            if (!menuPrincipal && !gameOver && !nivelCompletado) {
+                tiempoEstrategia += Gdx.graphics.getDeltaTime();
+
+                // Cambiar estrategia cada TIEMPO_CAMBIO_ESTRATEGIA segundos
+                if (tiempoEstrategia >= TIEMPO_CAMBIO_ESTRATEGIA) {
+                    tiempoEstrategia = 0;
+                    cambiarEstrategia();
+                }
+            }
+
+            // Renderizar la notificación
+            gameNotification.render();
         }
     }
 
@@ -317,21 +343,20 @@ public class BlockBreakerGame extends ApplicationAdapter {
     }
 
     public void agregarNuevaBola(int deltaXSpeed) {
-        // Verificar que haya bolas en juego
         if (!bolasActivas.isEmpty()) {
-            // Elegir la primera bola existente para duplicar
             PingBall bolaOriginal = bolasActivas.get(0);
-
-            // Crear una nueva bola con las mismas propiedades que la bola original
             PingBall nuevaBola = new PingBall(
                 bolaOriginal.getX(),
                 bolaOriginal.getY(),
                 bolaOriginal.getSize(),
                 bolaOriginal.getXSpeed() + deltaXSpeed,
                 bolaOriginal.getYSpeed(),
-                false);
+                false
+            );
 
-            // Añadir la nueva bola a la lista de bolas activas
+            // Asignar la estrategia actual a la nueva bola
+            nuevaBola.setMovementStrategy(estrategias[estrategiaActual]);
+
             bolasActivas.add(nuevaBola);
         }
     }
@@ -344,8 +369,18 @@ public class BlockBreakerGame extends ApplicationAdapter {
         puntajeMaximo = 0;
         nivelCompletado = false;
 
+        // Inicializar array de estrategias
+        estrategias = new MovementStrategy[] {
+            new NormalMovement(),
+            new ZigZagMovement(),
+            new WaveMovement()
+        };
+        estrategiaActual = 0;
+        tiempoEstrategia = 0;
+
         pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
         ball = new PingBall(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11, 10, 5 + nivel, 7 + nivel, true);
+        ball.setMovementStrategy(estrategias[0]); // Iniciar con movimiento normal
         bolasActivas.clear();
         bolasActivas.add(ball);
         crearBloques(2 + nivel);
@@ -439,6 +474,8 @@ public class BlockBreakerGame extends ApplicationAdapter {
         for (FallingPowerUp powerUp : fallingPowerUps) {
             powerUp.dispose();
         }
+
+        gameNotification.dispose();
     }
 
     public int getPuntaje() {
@@ -460,5 +497,20 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
     public void incrementarVidas() {
         vidas++;
+    }
+
+    private void cambiarEstrategia() {
+        estrategiaActual = (estrategiaActual + 1) % estrategias.length;
+        MovementStrategy nuevaEstrategia = estrategias[estrategiaActual];
+        
+        for (PingBall bola : bolasActivas) {
+            bola.setMovementStrategy(nuevaEstrategia);
+        }
+        
+        gameNotification.mostrarMovimiento(nuevaEstrategia.getClass().getSimpleName());
+    }
+
+    public void mostrarNotificacionPowerUp(String powerUpName) {
+        gameNotification.mostrarPowerUp(powerUpName);
     }
 }

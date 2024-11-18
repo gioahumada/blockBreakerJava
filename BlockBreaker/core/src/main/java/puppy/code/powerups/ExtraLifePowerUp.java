@@ -11,6 +11,6 @@ public class ExtraLifePowerUp extends FallingPowerUp {
     @Override
     public void activate(BlockBreakerGame game) {
         game.incrementarVidas();
-        System.out.println("PowerUp activado: ¡Vida extra!");
+        game.mostrarNotificacionPowerUp(this.getClass().getSimpleName());
     }
 }
