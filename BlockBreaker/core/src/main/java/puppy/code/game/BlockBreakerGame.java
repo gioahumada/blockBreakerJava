@@ -10,6 +10,7 @@ import puppy.code.entities.Paddle;
 import puppy.code.entities.PingBall;
 import puppy.code.interfaces.Damageable;
 import puppy.code.powerups.FallingPowerUp;
+import puppy.code.powerups.*;
 import puppy.code.powerups.TripleBallPowerUp;
 import puppy.code.powerups.SpeedUpPowerUp;
 import puppy.code.screens.*;
@@ -41,6 +42,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
     private boolean powerUpBolaExtraActivado = false;
     private boolean powerUpRalentizacionActivado = false;
+    private boolean vidaExtraGenerada = false;
 
     private int nivel;
     private int puntajeMaximo;
@@ -287,10 +289,16 @@ public class BlockBreakerGame extends ApplicationAdapter {
     private void generarPowerUp(int x, int y) {
         double random = Math.random();
         if (random < 0.2) {  // 20% de probabilidad de generar un power-up
-            if (Math.random() < 0.5) {
-                fallingPowerUps.add(new TripleBallPowerUp(x, y));
+            if (!vidaExtraGenerada && Math.random() < 0.2) {  // 20% de posibilidad si no ha aparecido
+                fallingPowerUps.add(new ExtraLifePowerUp(x, y));
+                vidaExtraGenerada = true;
             } else {
-                fallingPowerUps.add(new SpeedUpPowerUp(x, y));
+                double powerUpRandom = Math.random();
+                if (powerUpRandom < 0.5) {
+                    fallingPowerUps.add(new TripleBallPowerUp(x, y));
+                } else {
+                    fallingPowerUps.add(new SpeedUpPowerUp(x, y));
+                }
             }
         }
     }
@@ -346,11 +354,16 @@ public class BlockBreakerGame extends ApplicationAdapter {
         puntaje = 0;
         nivelCompletado = false;
         gameOver = false;
+        vidaExtraGenerada = false;  // Reiniciar al iniciar un nuevo juego
         blocks.clear();
         bolasActivas.clear();
+        fallingPowerUps.clear();  // Agrega esta línea para limpiar los power-ups
 
         pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
-        ball = new PingBall(pad.getX() + pad.getWidth() / 2 - 5, pad.getY() + pad.getHeight() + 11, 10, 5 + nivel, 7 + nivel, true);
+        ball = new PingBall(
+            pad.getX() + pad.getWidth() / 2 - 5,
+            pad.getY() + pad.getHeight() + 11,
+            10, 5 + nivel, 7 + nivel, true);
         bolasActivas.add(ball);
 
         crearBloques(2 + nivel);
@@ -362,6 +375,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
     public void cargarSiguienteNivel() {
         nivel++;
         nivelCompletado = false;
+        vidaExtraGenerada = false;  // Reiniciar al cargar nuevo nivel
 
         // Reiniciar la paleta
         pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
@@ -429,5 +443,9 @@ public class BlockBreakerGame extends ApplicationAdapter {
     public void activarTutorial() {
         tutorialActivo = true;
         menuPrincipal = false;
+    }
+
+    public void incrementarVidas() {
+        vidas++;
     }
 }
