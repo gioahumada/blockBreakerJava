@@ -9,10 +9,7 @@ import puppy.code.blocks.NormalBlock;
 import puppy.code.entities.Paddle;
 import puppy.code.entities.PingBall;
 import puppy.code.interfaces.Damageable;
-import puppy.code.powerups.FallingPowerUp;
 import puppy.code.powerups.*;
-import puppy.code.powerups.TripleBallPowerUp;
-import puppy.code.powerups.SpeedUpPowerUp;
 import puppy.code.screens.*;
 
 import com.badlogic.gdx.ApplicationAdapter;
@@ -143,7 +140,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
         tutorialActivo = false;
     }
 
-    public void crearBloques(int filas) {
+        public void crearBloques(int filas) {
         blocks.clear();
         int blockWidth = 70;
         int blockHeight = 26;
