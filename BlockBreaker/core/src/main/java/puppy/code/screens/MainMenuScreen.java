@@ -12,8 +12,6 @@ public class MainMenuScreen {
     private OrthographicCamera camera;
     private SpriteBatch batch;
     private Texture menuBackground;
-
-    // Nueva pantalla para el tutorial
     private TutorialScreen tutorialScreen;
 
     public MainMenuScreen(BlockBreakerGame game) {
@@ -22,12 +20,12 @@ public class MainMenuScreen {
         camera.setToOrtho(false, 800, 600);
         batch = new SpriteBatch();
         menuBackground = new Texture("mainscreen.png");
-
-        // Crear la pantalla del tutorial
         tutorialScreen = new TutorialScreen(game);
     }
 
     public void render() {
+        handleInput();
+        
         Gdx.gl.glClear(Gdx.gl.GL_COLOR_BUFFER_BIT);
         camera.update();
         batch.setProjectionMatrix(camera.combined);
@@ -35,20 +33,28 @@ public class MainMenuScreen {
         batch.begin();
         batch.draw(menuBackground, 0, 0, 800, 600);
         batch.end();
+    }
 
-        // Verificar si el usuario presiona el botón para empezar el juego o el tutorial
-        if (Gdx.input.isKeyPressed(Input.Keys.NUM_1)) {
+    private void handleInput() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) {
+            game.setDificultad("FACIL");
             game.mainMenuMusic.stop();
-            game.gameMusic.setLooping(true);
             game.gameMusic.play();
             game.startGame();
-        } else if (Gdx.input.isKeyPressed(Input.Keys.NUM_2)) {
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) {
+            game.setDificultad("DIFICIL");
             game.mainMenuMusic.stop();
-            game.tutorialMusic.setLooping(true);
+            game.gameMusic.play();
+            game.startGame();
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) {
+            game.mainMenuMusic.stop();
             game.tutorialMusic.play();
             game.activarTutorial();
-        } else if (Gdx.input.isKeyPressed(Input.Keys.NUM_3)) {
-            Gdx.app.exit();  // Salir del juego
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_0)) {
+            Gdx.app.exit();
         }
     }
 

@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import puppy.code.blocks.Block;
 import puppy.code.interfaces.Damageable;
 import puppy.code.entities.Paddle;
+import puppy.code.strategy.MovementStrategy;
+import puppy.code.strategy.NormalMovement;
 
 public class PingBall {
     private int x;
@@ -19,6 +21,7 @@ public class PingBall {
     private boolean active;
     private int velocidadOriginalX;
     private int velocidadOriginalY;
+    private MovementStrategy movementStrategy;
 
 
     public PingBall(int x, int y, int size, int xSpeed, int ySpeed, boolean iniciaQuieto) {
@@ -30,7 +33,7 @@ public class PingBall {
         velocidadOriginalX = xSpeed;
         velocidadOriginalY = ySpeed;
         estaQuieto = iniciaQuieto;
-
+        this.movementStrategy = new NormalMovement(); // Estrategia por defecto
     }
 
     // Método para verificar si la bola está quieta
@@ -122,11 +125,10 @@ public class PingBall {
     // Actualiza la posición de la bola en función de su velocidad
     public void update() {
         if (estaQuieto) return;
-
-        x += xSpeed;
-        y += ySpeed;
-
-        // Rebotar si toca los bordes de la pantalla
+        
+        movementStrategy.move(this);
+        
+        // Mantener la lógica de rebote existente
         if (x - size < 0 || x + size > Gdx.graphics.getWidth()) {
             xSpeed = -xSpeed;
         }
@@ -172,5 +174,10 @@ public class PingBall {
         boolean intersectaY = (paddle.getY() + paddle.getHeight() >= y - size) &&
             (paddle.getY() <= y + size);
         return intersectaX && intersectaY;
+    }
+
+    // Agregar método para cambiar la estrategia
+    public void setMovementStrategy(MovementStrategy strategy) {
+        this.movementStrategy = strategy;
     }
 }
