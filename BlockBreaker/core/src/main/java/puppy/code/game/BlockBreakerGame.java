@@ -8,6 +8,9 @@ import puppy.code.blocks.HardBlock;
 import puppy.code.blocks.NormalBlock;
 import puppy.code.entities.Paddle;
 import puppy.code.entities.PingBall;
+import puppy.code.factory.GameElementFactory;
+import puppy.code.factory.EasyGameElementFactory;
+import puppy.code.factory.HardGameElementFactory;
 import puppy.code.interfaces.Damageable;
 import puppy.code.powerups.*;
 import puppy.code.screens.*;
@@ -99,6 +102,11 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
     private GameNotification gameNotification;
 
+    private GameElementFactory gameElementFactory;
+    private String dificultad = "FACIL"; // Por defecto
+
+    private boolean mostrandoTutorial = false;
+
     @Override
     public void create() {
         camera = new OrthographicCamera();
@@ -134,23 +142,31 @@ public class BlockBreakerGame extends ApplicationAdapter {
     }
 
     public void iniciarJuego() {
+        // Establecer la fábrica según la dificultad seleccionada
+        gameElementFactory = dificultad.equals("FACIL") ? 
+            new EasyGameElementFactory() : 
+            new HardGameElementFactory();
+
+        // Reiniciar variables del juego
         nivel = 1;
-        vidas = 3;
         puntaje = 0;
-        puntajeMaximo = 0;
+        vidas = gameElementFactory.getInitialLives();
+        
+        // Inicializar la bola con la velocidad correspondiente
+        float ballSpeed = gameElementFactory.getBallSpeed();
+        ball = new PingBall(400, 50, 10, (int)ballSpeed, (int)ballSpeed, true);
+        
+        // Inicializar la paleta
+        pad = new Paddle(350, 20, 100, 10);
+        
+        // Crear los bloques iniciales
+        crearBloques(5);
+        
+        // Reiniciar estado del juego
         nivelCompletado = false;
-        gameOver = false;
-
-        pad = new Paddle(Gdx.graphics.getWidth() / 2 - 50, 40, 100, 10);
-        int velocidadBase = 5 + nivel;
-        ball = new PingBall(Gdx.graphics.getWidth() / 2 - 10, pad.getY() + pad.getHeight() + 11, 10, velocidadBase, velocidadBase, true);
-
-        crearBloques(2 + nivel);
-        bolasActivas.clear();
-        bolasActivas.add(ball);
-
-        menuPrincipal = true;
-        tutorialActivo = false;
+        powerUpBolaExtraActivado = false;
+        powerUpRalentizacionActivado = false;
+        vidaExtraGenerada = false;
     }
 
         public void crearBloques(int filas) {
@@ -161,11 +177,7 @@ public class BlockBreakerGame extends ApplicationAdapter {
         for (int cont = 0; cont < filas; cont++) {
             y -= blockHeight + 10;
             for (int x = 5; x < Gdx.graphics.getWidth(); x += blockWidth + 10) {
-                if (Math.random() > 0.8) {
-                    blocks.add(new HardBlock(x, y, blockWidth, blockHeight));
-                } else {
-                    blocks.add(new NormalBlock(x, y, blockWidth, blockHeight));
-                }
+                blocks.add(gameElementFactory.createBlock(x, y, blockWidth, blockHeight));
             }
         }
     }
@@ -326,19 +338,8 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
     // Método para generar power-ups aleatorios
     private void generarPowerUp(int x, int y) {
-        double random = Math.random();
-        if (random < 0.2) {  // 20% de probabilidad de generar un power-up
-            if (!vidaExtraGenerada && Math.random() < 0.2) {  // 20% de posibilidad si no ha aparecido
-                fallingPowerUps.add(new ExtraLifePowerUp(x, y));
-                vidaExtraGenerada = true;
-            } else {
-                double powerUpRandom = Math.random();
-                if (powerUpRandom < 0.5) {
-                    fallingPowerUps.add(new TripleBallPowerUp(x, y));
-                } else {
-                    fallingPowerUps.add(new SpeedUpPowerUp(x, y));
-                }
-            }
+        if (Math.random() < 0.2) {  // 20% de probabilidad de generar un power-up
+            fallingPowerUps.add(gameElementFactory.createPowerUp(x, y));
         }
     }
 
@@ -502,15 +503,27 @@ public class BlockBreakerGame extends ApplicationAdapter {
     private void cambiarEstrategia() {
         estrategiaActual = (estrategiaActual + 1) % estrategias.length;
         MovementStrategy nuevaEstrategia = estrategias[estrategiaActual];
-        
+
         for (PingBall bola : bolasActivas) {
             bola.setMovementStrategy(nuevaEstrategia);
         }
-        
+
         gameNotification.mostrarMovimiento(nuevaEstrategia.getClass().getSimpleName());
     }
 
     public void mostrarNotificacionPowerUp(String powerUpName) {
         gameNotification.mostrarPowerUp(powerUpName);
+    }
+
+    public void setDificultad(String dificultad) {
+        this.dificultad = dificultad;
+    }
+
+    public void mostrarTutorial() {
+        mostrandoTutorial = true;
+    }
+
+    public void salirTutorial() {
+        mostrandoTutorial = false;
     }
 }
