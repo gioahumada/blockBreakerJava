@@ -57,6 +57,8 @@ public class TutorialScreen {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             game.tutorialMusic.stop();
             game.mainMenuMusic.play();
+            game.setTutorialActivo(false);
+            game.iniciarJuego();
             game.volverAlMenu();
         }
     }

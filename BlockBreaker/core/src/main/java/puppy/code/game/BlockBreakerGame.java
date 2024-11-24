@@ -35,12 +35,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BlockBreakerGame extends ApplicationAdapter {
-    // Instancia única del juego
     private static BlockBreakerGame instance;
 
     // Constructor privado para evitar instanciación directa
     private BlockBreakerGame() {
-        // Constructor existente se mueve aquí
+        
     }
 
     // Método público estático para obtener la instancia única
@@ -394,6 +393,10 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
     public void volverAlMenu() {
         menuPrincipal = true;
+        tutorialActivo = false;
+        gameOver = false;
+        nivelCompletado = false;
+        paused = false;
         iniciarJuego();
     }
 
@@ -494,6 +497,9 @@ public class BlockBreakerGame extends ApplicationAdapter {
     public void activarTutorial() {
         tutorialActivo = true;
         menuPrincipal = false;
+        gameOver = false;
+        nivelCompletado = false;
+        paused = false;
     }
 
     public void incrementarVidas() {
@@ -525,5 +531,9 @@ public class BlockBreakerGame extends ApplicationAdapter {
 
     public void salirTutorial() {
         mostrandoTutorial = false;
+    }
+
+    public void setTutorialActivo(boolean estado) {
+        tutorialActivo = estado;
     }
 }
